@@ -83,7 +83,6 @@ void CastingBar::Update()
 
 		if (charged && flashWhenCharged) {
 			//oxygenMeter->uiMovie->Invoke("meter.doFlash", nullptr, nullptr, 0);
-            log::info("Flashing at {}", progress);
 			return;
 		}
 
@@ -98,8 +97,7 @@ void CastingBar::Update()
 
 		casting = false;
 		charged = false;
-		//const GFxValue refill = 0;
-		//oxygenMeter->uiMovie->Invoke("meter.updateMeterPercent", nullptr, &refill, 1);
+
 		oxygenMeter->uiMovie->Invoke("meter.doFadeOut", nullptr, nullptr, 0);
 	}
 }
@@ -140,9 +138,6 @@ float CastingBar::GetChargeProgress(MagicCaster* caster)
 {
 	// TO DO: replace with get() when states are done
 	auto state = caster->state.underlying();
-
-    log::info("State = {}", state);
-
 	if (state != State::kCharging) {
 		return 1.0f;
 	}
