@@ -1,5 +1,5 @@
 # Casting Bar
-SKSE plugin that adds casting bar known from other games
+SKSE plugin that adds progress bar for spell casting.
 
 ### Requirements
 * [CMake](https://cmake.org/)

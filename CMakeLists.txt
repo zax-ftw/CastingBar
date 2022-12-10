@@ -1,73 +1,111 @@
 cmake_minimum_required(VERSION 3.21)
-message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}.")
+message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}")
 
 ########################################################################################################################
 ## Define project
 ########################################################################################################################
 project(
-        CastingBar
-        VERSION 1.0.0
-        DESCRIPTION "SKSE plugin built with CommonLibSSE."
-        LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    CastingBar
+    VERSION 1.0.0
+    LANGUAGES CXX
+)
+
+set(AUTHOR_NAME "Zax-Ftw")
+
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 
-include(GNUInstallDirs)
-
 configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in
-        ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-        @ONLY)
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    @ONLY
+)
 
-set(sources
-		src/CastingBar.cpp
-        src/Settings.cpp
-        src/Events.cpp
-        src/Main.cpp
-
-        ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+set(SOURCE_FILES
+ "src/Main.cpp"
+ "src/Settings.cpp"
+ "src/CastingBar.cpp"
+ "src/Events.cpp")
 
 source_group(
-        TREE ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES
-        ${headers}
-        ${sources}
-        ${tests})
+    TREE ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PREFIX "Source Files"
+    FILES ${SOURCE_FILES}
+)
 
 #########################################################################################################################
 ### Build options
 #########################################################################################################################
-message("Options:")
-option(BUILD_TESTS "Build unit tests." OFF)
-message("\tTests: ${BUILD_TESTS}")
+
+option(COPY_OUTPUT "Copy the build output to the Skyrim directory." ON)
+
+cmake_host_system_information(
+	RESULT SKYRIM_PATH
+	QUERY WINDOWS_REGISTRY 
+	"HKLM/SOFTWARE/WOW6432Node/Bethesda Softworks/Skyrim Special Edition"
+	VALUE "Installed Path"
+)
 
 ########################################################################################################################
 ## Configure target DLL
 ########################################################################################################################
+
 find_package(CommonLibSSE CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
 
-find_path(SIMPLEINI_INCLUDE_DIRS "ConvertUTF.c")
+find_path(SIMPLEINI_INCLUDE_DIR "ConvertUTF.c")
 
-add_commonlibsse_plugin(${PROJECT_NAME} SOURCES ${headers} ${sources})
-add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS "${PROJECT_NAME}")
+add_library(
+	${PROJECT_NAME}
+	SHARED
+	${SOURCE_FILES}
+	${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	.clang-format
+	.editorconfig
+)
 
-target_include_directories(${PROJECT_NAME}
-        PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
-        $<INSTALL_INTERFACE:src>
-        ${SIMPLEINI_INCLUDE_DIRS})
+target_commonlibsse_properties(
+	${PROJECT_NAME}
+	AUTHOR ${AUTHOR_NAME}
+	USE_ADDRESS_LIBRARY
+)
 
-target_include_directories(${PROJECT_NAME}
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+target_link_libraries(
+	${PROJECT_NAME}
+    PRIVATE
+    CommonLibSSE::CommonLibSSE
+)
 
-target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        spdlog::spdlog)
+target_include_directories(
+    ${PROJECT_NAME}
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${SIMPLEINI_INCLUDE_DIR}
+)
 
-target_precompile_headers(${PROJECT_NAME}
-        PRIVATE
-        src/PCH.h)
+target_precompile_headers(
+	${PROJECT_NAME}
+    PRIVATE
+		src/PCH.h
+)
+
+target_compile_features(
+	${PROJECT_NAME} 
+	PRIVATE 
+		cxx_std_23
+)
+
+########################################################################################################################
+## Automatic plugin deployment
+########################################################################################################################
+
+if (COPY_OUTPUT)
+	if (DEFINED SKYRIM_PATH)
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${SKYRIM_PATH}/Data/SKSE/Plugins/)		
+		if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+				COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> ${SKYRIM_PATH}/Data/SKSE/Plugins/)
+		endif()
+	else ()
+		message("Installed Path is not defined. Skipping post-build copy command.")
+	endif ()
+endif ()

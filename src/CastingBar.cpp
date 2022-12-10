@@ -2,7 +2,6 @@
 #include "Settings.h"
 
 using namespace RE;
-using namespace SKSE;
 
 CastingBar::CastingBar()
 {
@@ -34,17 +33,17 @@ void CastingBar::Register()
 
 void CastingBar::Show()
 {
-	auto msgQ = UIMessageQueue::GetSingleton();
-	if (msgQ) {
-		msgQ->AddMessage(CastingBar::MENU_NAME, UI_MESSAGE_TYPE::kShow, nullptr);
+	auto queue = UIMessageQueue::GetSingleton();
+	if (queue) {
+		queue->AddMessage(CastingBar::MENU_NAME, UI_MESSAGE_TYPE::kShow, nullptr);
 	}
 }
 
 void CastingBar::Hide()
 {
-	auto msgQ = UIMessageQueue::GetSingleton();
-	if (msgQ) {
-		msgQ->AddMessage(CastingBar::MENU_NAME, UI_MESSAGE_TYPE::kHide, nullptr);
+	auto queue = UIMessageQueue::GetSingleton();
+	if (queue) {
+		queue->AddMessage(CastingBar::MENU_NAME, UI_MESSAGE_TYPE::kHide, nullptr);
 	}
 }
 
@@ -63,11 +62,11 @@ void CastingBar::ToggleVisibility(bool mode)
 
 void CastingBar::Update()
 {
-	GPtr<IMenu> oxygenMeter = UI::GetSingleton()->GetMenu(CastingBar::MENU_NAME);
-	if (!oxygenMeter || !oxygenMeter->uiMovie)
+	GPtr<IMenu> menu = UI::GetSingleton()->GetMenu(CastingBar::MENU_NAME);
+	if (!menu || !menu->uiMovie)
 		return;
 
-	ApplyLayout(oxygenMeter);
+	ApplyLayout(menu);
 
 	auto player = PlayerCharacter::GetSingleton();
 	auto caster = GetCastingSource(player);
@@ -76,18 +75,18 @@ void CastingBar::Update()
 
 		casting = true;
 
-		float progress = GetChargeProgress(caster);
-		const GFxValue percent = progress * 100.0;
-
-		static bool flashWhenCharged = Settings::GetSingleton()->flashWhenCharged;
+		static bool flashWhenCharged = Settings::GetSingleton().flashWhenCharged;
 
 		if (charged && flashWhenCharged) {
-			//oxygenMeter->uiMovie->Invoke("meter.doFlash", nullptr, nullptr, 0);
+			//menu->uiMovie->Invoke("meter.doFlash", nullptr, nullptr, 0);
 			return;
 		}
 
-		oxygenMeter->uiMovie->Invoke("meter.doShow", nullptr, nullptr, 0);
-		oxygenMeter->uiMovie->Invoke("meter.setMeterPercent", nullptr, &percent, 1);
+		float progress = GetChargeProgress(caster);
+		const GFxValue percent = progress * 100.0;
+
+		menu->uiMovie->Invoke("meter.doShow", nullptr, nullptr, 0);
+		menu->uiMovie->Invoke("meter.setMeterPercent", nullptr, &percent, 1);
 
 		if (progress >= 1.0) {
 			charged = true;
@@ -98,18 +97,18 @@ void CastingBar::Update()
 		casting = false;
 		charged = false;
 
-		oxygenMeter->uiMovie->Invoke("meter.doFadeOut", nullptr, nullptr, 0);
+		menu->uiMovie->Invoke("meter.doFadeOut", nullptr, nullptr, 0);
 	}
 }
 
 void CastingBar::ApplyLayout(GPtr<IMenu> oxygenMeter)
 {
-	auto settings = Settings::GetSingleton();
+	auto& settings = Settings::GetSingleton();
 
-	const GFxValue widgetXPosition = settings->widgetXPosition;
-	const GFxValue widgetYPosition = settings->widgetYPosition;
-	const GFxValue widgetXScale = settings->widgetXScale;
-	const GFxValue widgetYScale = settings->widgetYScale;
+	const GFxValue widgetXPosition = settings.widgetXPosition;
+	const GFxValue widgetYPosition = settings.widgetYPosition;
+	const GFxValue widgetXScale = settings.widgetXScale;
+	const GFxValue widgetYScale = settings.widgetYScale;
 
 	GFxValue posArray[5]{ widgetXPosition, widgetYPosition, 0.0, widgetXScale, widgetYScale };
 
@@ -136,7 +135,7 @@ MagicCaster* CastingBar::GetCastingSource(Actor* actor)
 
 float CastingBar::GetChargeProgress(MagicCaster* caster)
 {
-	// TO DO: replace with get() when states are done
+	// TODO: replace with get() when states are done
 	auto state = caster->state.underlying();
 	if (state != State::kCharging) {
 		return 1.0f;
@@ -145,7 +144,5 @@ float CastingBar::GetChargeProgress(MagicCaster* caster)
 	float targetTime = caster->currentSpell->GetChargeTime();
 	float actualTime = caster->castingTimer;
 
-	auto result = (targetTime - actualTime) / targetTime;
-
-	return result;
+	return (targetTime - actualTime) / targetTime;
 }

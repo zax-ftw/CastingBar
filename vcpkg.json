@@ -1,22 +1,10 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
   "name": "casting-bar",
   "version-string": "1.0.0",
-  "port-version": 0,
-  "description": "SKSE plugin built with CommonLibSSE.",
   "homepage": "https://github.com/zax-ftw/CastingBar",
   "license": "Apache-2.0",
-  "features": {
-    "plugin": {
-      "description": "Build the SKSE plugin.",
-      "dependencies": [
-        "commonlibsse-ng",
-        "simpleini"
-      ]
-    }
-
-  },
-  "default-features": [
-    "plugin"
+  "dependencies": [
+    "commonlibsse-ng",
+    "simpleini"
   ]
 }

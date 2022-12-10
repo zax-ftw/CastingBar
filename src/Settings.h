@@ -3,10 +3,10 @@
 class Settings
 {
 public:
-	[[nodiscard]] static Settings* GetSingleton()
+	[[nodiscard]] static Settings& GetSingleton()
 	{
 		static Settings singleton;
-		return std::addressof(singleton);
+        return singleton;
 	}
 
 	void Load();

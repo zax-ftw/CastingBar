@@ -33,7 +33,7 @@ BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const MenuOpenClose
 			CastingBar::Hide();
 		}
         if (a_event->menuName == JournalMenu::MENU_NAME && !a_event->opening) {
-			Settings::GetSingleton()->Load();
+			Settings::GetSingleton().Load();
 		}
 	}
 
