@@ -1,6 +1,6 @@
 {
   "name": "casting-bar",
-  "version-string": "1.0.0",
+  "version-string": "1.0.1",
   "homepage": "https://github.com/zax-ftw/CastingBar",
   "license": "Apache-2.0",
   "dependencies": [
