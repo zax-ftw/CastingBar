@@ -50,6 +50,7 @@ cmake_host_system_information(
 ########################################################################################################################
 
 find_package(CommonLibSSE CONFIG REQUIRED)
+find_package(magic_enum CONFIG REQUIRED)
 
 find_path(SIMPLEINI_INCLUDE_DIR "ConvertUTF.c")
 
@@ -72,6 +73,7 @@ target_link_libraries(
 	${PROJECT_NAME}
     PRIVATE
     CommonLibSSE::CommonLibSSE
+	magic_enum::magic_enum
 )
 
 target_include_directories(

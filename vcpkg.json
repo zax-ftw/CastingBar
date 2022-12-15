@@ -5,6 +5,7 @@
   "license": "Apache-2.0",
   "dependencies": [
     "commonlibsse-ng",
+    "magic-enum",
     "simpleini"
   ]
 }

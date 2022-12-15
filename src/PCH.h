@@ -106,6 +106,7 @@
 
 #include <SimpleIni.h>
 #include <fmt/format.h>
+#include <magic_enum.hpp>
 
 // Compatible declarations with other sample projects.
 #define DLLEXPORT __declspec(dllexport)
