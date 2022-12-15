@@ -50,20 +50,8 @@ namespace {
                     case MessagingInterface::kInputLoaded:
                         break;
                     case MessagingInterface::kDataLoaded:                   
-                        MenuOpenCloseEventHandler::Register();
+						MenuModeEventHandler::Register();
                         CastingBar::Register();
-                        break;
-                    case MessagingInterface::kNewGame:
-                        CastingBar::Show();
-                        break;
-                    case MessagingInterface::kPreLoadGame:
-                        break;
-                    case MessagingInterface::kPostLoadGame:
-                        CastingBar::Show();
-                        break;
-                    case MessagingInterface::kSaveGame:
-                        break;
-                    case MessagingInterface::kDeleteGame:
                         break;
                 }
             })) {

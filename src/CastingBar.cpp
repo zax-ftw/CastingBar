@@ -1,148 +1,186 @@
 #include "CastingBar.h"
+
 #include "Settings.h"
 
 using namespace RE;
 
-CastingBar::CastingBar()
+CastingBar::CastingBar() 
 {
-	auto scaleformManager = BSScaleformManager::GetSingleton();
+    logger::info("CastingBar::Ctor");
 
-	inputContext = Context::kNone;
-	depthPriority = 0;
+    depthPriority = 0;
 
-	menuFlags.set(UI_MENU_FLAGS::kAlwaysOpen);
-	menuFlags.set(UI_MENU_FLAGS::kRequiresUpdate);
-	menuFlags.set(UI_MENU_FLAGS::kAllowSaving);
+    menuFlags.set(UI_MENU_FLAGS::kAlwaysOpen);
+    menuFlags.set(UI_MENU_FLAGS::kRequiresUpdate);
+    menuFlags.set(UI_MENU_FLAGS::kAllowSaving);
 
-	if (uiMovie) {
-		uiMovie->SetMouseCursorCount(0);  // disable input
-	}
+    if (uiMovie) {
+        uiMovie->SetMouseCursorCount(0);  // disable input
+        uiMovie->SetVisible(true);
+    }
 
-	scaleformManager->LoadMovie(this, this->uiMovie, MENU_PATH);
-}	
-
-void CastingBar::Register()
-{
-	auto ui = UI::GetSingleton();
-	if (ui) {
-		ui->Register(MENU_NAME, Creator);
-
-		CastingBar::Show();
-	}
+    auto scaleform = BSScaleformManager::GetSingleton();
+    scaleform->LoadMovie(this, this->uiMovie, MENU_PATH);
 }
 
-void CastingBar::Show()
+CastingBar::~CastingBar() 
 {
-	auto queue = UIMessageQueue::GetSingleton();
-	if (queue) {
-		queue->AddMessage(CastingBar::MENU_NAME, UI_MESSAGE_TYPE::kShow, nullptr);
-	}
+    logger::info("CastingBar::Dtor");
 }
 
-void CastingBar::Hide()
+void CastingBar::Register() 
 {
-	auto queue = UIMessageQueue::GetSingleton();
-	if (queue) {
-		queue->AddMessage(CastingBar::MENU_NAME, UI_MESSAGE_TYPE::kHide, nullptr);
-	}
+    if (auto ui = UI::GetSingleton()) {
+        ui->Register(MENU_NAME, Creator);
+    }
 }
 
-void CastingBar::ToggleVisibility(bool mode)
+void CastingBar::Show() 
 {
-	auto ui = UI::GetSingleton();
-	if (!ui)
-		return;
-
-	auto overlayMenu = ui->GetMenu(CastingBar::MENU_NAME);
-	if (!overlayMenu || !overlayMenu->uiMovie)
-		return;
-
-	overlayMenu->uiMovie->SetVisible(mode);
+    if (auto queue = UIMessageQueue::GetSingleton()) {
+        queue->AddMessage(CastingBar::MENU_NAME, UI_MESSAGE_TYPE::kShow, nullptr);
+    }
 }
 
-void CastingBar::Update()
+void CastingBar::Hide() 
 {
-	GPtr<IMenu> menu = UI::GetSingleton()->GetMenu(CastingBar::MENU_NAME);
-	if (!menu || !menu->uiMovie)
-		return;
+    if (auto queue = UIMessageQueue::GetSingleton()) {
+        queue->AddMessage(CastingBar::MENU_NAME, UI_MESSAGE_TYPE::kHide, nullptr);
+    }
+}
 
-	ApplyLayout(menu);
+CastingBar::MessageResult CastingBar::ProcessMessage(UIMessage& message)
+{
+    using Type = RE::UI_MESSAGE_TYPE;
 
-	auto player = PlayerCharacter::GetSingleton();
-	auto caster = GetCastingSource(player);
+	if (message.menu == MENU_NAME) {
 
-	if (caster) {
+		logger::info("{}::ProcessMessage >> {}", 
+			message.menu, magic_enum::enum_name(message.type.get()));
 
-		casting = true;
-
-		static bool flashWhenCharged = Settings::GetSingleton().flashWhenCharged;
-
-		if (charged && flashWhenCharged) {
-			//menu->uiMovie->Invoke("meter.doFlash", nullptr, nullptr, 0);
-			return;
+		switch (message.type.get()) {
+			case Type::kShow:
+            case Type::kReshow:
+				OnShow();
+				break;
+			case Type::kHide:
+            case Type::kForceHide:
+				OnHide();
+				break;
 		}
+    }
 
-		float progress = GetChargeProgress(caster);
-		const GFxValue percent = progress * 100.0;
-
-		menu->uiMovie->Invoke("meter.doShow", nullptr, nullptr, 0);
-		menu->uiMovie->Invoke("meter.setMeterPercent", nullptr, &percent, 1);
-
-		if (progress >= 1.0) {
-			charged = true;
-		}
-
-	} else if (casting) {
-
-		casting = false;
-		charged = false;
-
-		menu->uiMovie->Invoke("meter.doFadeOut", nullptr, nullptr, 0);
-	}
+    return IMenu::ProcessMessage(message);
 }
 
-void CastingBar::ApplyLayout(GPtr<IMenu> oxygenMeter)
+void CastingBar::AdvanceMovie(float a_interval, std::uint32_t a_currentTime) 
 {
-	auto& settings = Settings::GetSingleton();
+    IMenu::AdvanceMovie(a_interval, a_currentTime);
 
-	const GFxValue widgetXPosition = settings.widgetXPosition;
-	const GFxValue widgetYPosition = settings.widgetYPosition;
-	const GFxValue widgetXScale = settings.widgetXScale;
-	const GFxValue widgetYScale = settings.widgetYScale;
-
-	GFxValue posArray[5]{ widgetXPosition, widgetYPosition, 0.0, widgetXScale, widgetYScale };
-
-	oxygenMeter->uiMovie->Invoke("meter.setLocation", nullptr, posArray, 5);
+    CastingBar::Update();
 }
 
-void CastingBar::AdvanceMovie(float a_interval, std::uint32_t a_currentTime)
+CastingBar::EventResult CastingBar::ProcessEvent(const MenuOpenCloseEvent* a_event, MenuOpenCloseEventSource*) 
 {
-	CastingBar::Update();
-	IMenu::AdvanceMovie(a_interval, a_currentTime);
+    auto controlMap = ControlMap::GetSingleton();
+    if (controlMap) {
+        auto& priorityStack = controlMap->contextPriorityStack;
+        if (!priorityStack.empty() && priorityStack.back() == Context::kGameplay) {
+            ToggleVisibility(true);
+        } else {
+            ToggleVisibility(false);
+        }
+    }
+    return EventResult::kContinue;
 }
 
-MagicCaster* CastingBar::GetCastingSource(Actor* actor)
+void CastingBar::Update() 
 {
-	auto caster = actor->GetMagicCaster(CastingSource::kRightHand);
-	if (!caster->currentSpell) {
-		caster = actor->GetMagicCaster(CastingSource::kLeftHand);
-		if (!caster->currentSpell) {
-			return nullptr;
-		}
-	}
-	return caster;
+    ApplyLayout();
+
+    auto player = PlayerCharacter::GetSingleton();
+    auto caster = GetCastingSource(player);
+
+    if (caster) {
+
+        casting = true;
+
+        static bool flashWhenCharged = Settings::GetSingleton().flashWhenCharged;
+
+        if (charged && flashWhenCharged) {
+            // uiMovie->Invoke("meter.doFlash", nullptr, nullptr, 0);
+            return;
+        }
+
+        float progress = GetChargeProgress(caster);
+        const GFxValue percent = progress * 100.0;
+
+        uiMovie->Invoke("meter.doShow", nullptr, nullptr, 0);
+        uiMovie->Invoke("meter.setMeterPercent", nullptr, &percent, 1);
+
+        if (progress >= 1.0) {
+            charged = true;
+        }
+
+    } else if (casting) {
+
+        casting = false;
+        charged = false;
+
+        uiMovie->Invoke("meter.doFadeOut", nullptr, nullptr, 0);
+    }
+}
+
+void CastingBar::ApplyLayout() 
+{
+    auto& settings = Settings::GetSingleton();
+
+    const GFxValue x_pos = settings.widgetXPosition;
+    const GFxValue y_pos = settings.widgetYPosition;
+    const GFxValue x_scl = settings.widgetXScale;
+    const GFxValue y_scl = settings.widgetYScale;
+
+    GFxValue posArray[5] = {x_pos, y_pos, 0.0, x_scl, y_scl};
+
+    uiMovie->Invoke("meter.setLocation", nullptr, posArray, 5);
+}
+
+void CastingBar::OnShow() 
+{
+    if (auto ui = UI::GetSingleton()) {
+        ui->AddEventSink<MenuOpenCloseEvent>(this);
+    }
+};
+
+void CastingBar::OnHide() 
+{
+    if (auto ui = UI::GetSingleton()) {
+        ui->RemoveEventSink<MenuOpenCloseEvent>(this);
+    }
+};
+
+MagicCaster* CastingBar::GetCastingSource(Actor* actor) 
+{
+    auto caster = actor->GetMagicCaster(CastingSource::kRightHand);
+    if (!caster->currentSpell) {
+        caster = actor->GetMagicCaster(CastingSource::kLeftHand);
+        if (!caster->currentSpell) {
+            return nullptr;
+        }
+    }
+    return caster;
 }
 
 float CastingBar::GetChargeProgress(MagicCaster* caster)
 {
-	// TODO: replace with get() when states are done
-	auto state = caster->state.underlying();
-	if (state != State::kCharging) {
-		return 1.0f;
-	}
+    // TODO: replace with state.get() when states are done
+    auto state = caster->state.underlying();
+    if (state != State::kCharging) {
+        return 1.0f;
+    }
 
-	float targetTime = caster->currentSpell->GetChargeTime();
-	float actualTime = caster->castingTimer;
+    float targetTime = caster->currentSpell->GetChargeTime();
+    float actualTime = caster->castingTimer;
 
-	return (targetTime - actualTime) / targetTime;
+    return (targetTime - actualTime) / targetTime;
 }

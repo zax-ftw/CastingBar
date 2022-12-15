@@ -1,53 +1,28 @@
 #include "Events.h"
+
 #include "CastingBar.h"
 #include "Settings.h"
 
 using namespace RE;
 
-MenuOpenCloseEventHandler* MenuOpenCloseEventHandler::GetSingleton()
+void MenuModeEventHandler::Register() 
 {
-	static MenuOpenCloseEventHandler singleton;
-	return std::addressof(singleton);
+    if (auto ui = UI::GetSingleton()) {
+        ui->AddEventSink<MenuModeChangeEvent>(&GetSingleton());
+	}
 }
 
-void MenuOpenCloseEventHandler::Register()
+BSEventNotifyControl MenuModeEventHandler::ProcessEvent(const RE::MenuModeChangeEvent* a_event, BSTEventSource<RE::MenuModeChangeEvent>*) 
 {
-	auto ui = UI::GetSingleton();
-	ui->AddEventSink(GetSingleton());
-}
+	using Mode = RE::MenuModeChangeEvent::Mode;
 
-BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const MenuOpenCloseEvent* a_event,BSTEventSource<MenuOpenCloseEvent>*)
-{
-	if (a_event) {
-		if (a_event->menuName == HUDMenu::MENU_NAME) {
-			if (a_event->opening) {
-				CastingBar::Show();
-			} else {
-				CastingBar::Hide();
-			}
-		} else if (a_event->menuName == RaceSexMenu::MENU_NAME && !a_event->opening) {
-			CastingBar::Show();
-		} else if (a_event->menuName == LoadingMenu::MENU_NAME && !a_event->opening) {
-			CastingBar::Show();
-		} else if (a_event->menuName == ContainerMenu::MENU_NAME && a_event->opening) {
-			CastingBar::Hide();
-		}
-        if (a_event->menuName == JournalMenu::MENU_NAME && !a_event->opening) {
-			Settings::GetSingleton().Load();
-		}
-	}
+	logger::trace("{}: {}", a_event->menu, a_event->mode);
 
-	auto controlMap = ControlMap::GetSingleton();
-	if (controlMap) {
-		auto& priorityStack = controlMap->contextPriorityStack;
-		if (priorityStack.empty() ||
-			(priorityStack.back() != UserEvents::INPUT_CONTEXT_ID::kGameplay &&
-				priorityStack.back() != UserEvents::INPUT_CONTEXT_ID::kFavorites &&
-				priorityStack.back() != UserEvents::INPUT_CONTEXT_ID::kConsole)) {
-					CastingBar::ToggleVisibility(false);
-		} else {
-			CastingBar::ToggleVisibility(true);
+    if (a_event->menu == LoadingMenu::MENU_NAME) {
+		if (a_event->mode == Mode::kHidden) {
+            CastingBar::Show();
 		}
-	}
-	return BSEventNotifyControl::kContinue;
+    }
+
+    return BSEventNotifyControl::kContinue;
 }
