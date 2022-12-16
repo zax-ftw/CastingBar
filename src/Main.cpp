@@ -44,16 +44,16 @@ namespace {
     void InitializeMessaging()
     {
         if (!GetMessagingInterface()->RegisterListener([](MessagingInterface::Message* message) {
-                switch (message->type) {
-                    case MessagingInterface::kPostLoad:
-                    case MessagingInterface::kPostPostLoad:
-                    case MessagingInterface::kInputLoaded:
-                        break;
-                    case MessagingInterface::kDataLoaded:                   
-						MenuModeEventHandler::Register();
-                        CastingBar::Register();
-                        break;
-                }
+				switch (message->type) {
+				case MessagingInterface::kPostLoad:
+				case MessagingInterface::kPostPostLoad:
+				case MessagingInterface::kInputLoaded:
+					break;
+				case MessagingInterface::kDataLoaded:
+					MenuModeEventHandler::Register();
+					CastingBar::Register();
+					break;
+				}
             })) {
             stl::report_and_fail("Unable to register message listener.");
         }

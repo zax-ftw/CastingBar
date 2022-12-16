@@ -59,14 +59,14 @@ CastingBar::MessageResult CastingBar::ProcessMessage(UIMessage& message)
 			message.menu, magic_enum::enum_name(message.type.get()));
 
 		switch (message.type.get()) {
-			case Type::kShow:
-            case Type::kReshow:
-				OnShow();
-				break;
-			case Type::kHide:
-            case Type::kForceHide:
-				OnHide();
-				break;
+		case Type::kShow:
+		case Type::kReshow:
+			OnShow();
+			break;
+		case Type::kHide:
+		case Type::kForceHide:
+			OnHide();
+			break;
 		}
     }
 
