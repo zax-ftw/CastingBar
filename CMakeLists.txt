@@ -6,7 +6,7 @@ message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}")
 ########################################################################################################################
 project(
     CastingBar
-    VERSION 1.0.1
+    VERSION 2.1.4
     LANGUAGES CXX
 )
 
@@ -24,7 +24,15 @@ set(SOURCE_FILES
  "src/Main.cpp"
  "src/Settings.cpp"
  "src/CastingBar.cpp"
- "src/Events.cpp")
+ "src/StateController.cpp" 
+ "src/EventHandler.cpp"
+ "src/States/DefaultState.cpp" 
+ "src/States/RangedState.cpp"
+ "src/States/MagicState.cpp" 
+ "src/States/RightMagicState.cpp" 
+ "src/States/LeftMagicState.cpp" 
+ "src/States/VoiceState.cpp" 
+ "src/Hooks/PlayerCharacter.cpp")
 
 source_group(
     TREE ${CMAKE_CURRENT_SOURCE_DIR}/src

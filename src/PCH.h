@@ -119,3 +119,5 @@ namespace logger = SKSE::log;
 namespace util {
     using SKSE::stl::report_and_fail;
 }
+
+#define OFFSET(SE, AE, VR) REL::VariantOffset(SE, AE, VR).offset()

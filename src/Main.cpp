@@ -1,6 +1,12 @@
 #include "CastingBar.h"
+#include "StateController.h"
+#include "EventHandler.h"
 #include "Settings.h"
-#include "Events.h"
+
+#include "States/RangedState.h"
+#include "States/VoiceState.h"
+
+#include "Hooks/PlayerCharacter.h"
 
 #include <stddef.h>
 
@@ -41,17 +47,28 @@ namespace {
         spdlog::set_pattern("[%H:%M:%S][%l] %v");
     }
 
+    void InitializeHooking()
+	{
+		logger::trace("Initializing trampoline...");
+		auto& trampoline = GetTrampoline();
+		trampoline.create(128);
+		logger::trace("Trampoline initialized");
+
+		RangedState::InstallHooks(trampoline);
+		Hooks::PlayerCharacterEx::InstallHooks(trampoline);
+	}
+
     void InitializeMessaging()
     {
         if (!GetMessagingInterface()->RegisterListener([](MessagingInterface::Message* message) {
-				switch (message->type) {
+				switch (message->type) 
+				{
 				case MessagingInterface::kPostLoad:
-				case MessagingInterface::kPostPostLoad:
-				case MessagingInterface::kInputLoaded:
+					InitializeHooking();
 					break;
 				case MessagingInterface::kDataLoaded:
 					MenuModeEventHandler::Register();
-					CastingBar::Register();
+					CastingBar::Register();				
 					break;
 				}
             })) {
@@ -72,7 +89,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* sks
     SKSE::Init(skse);
     InitializeMessaging();
 
-    Settings::GetSingleton().Load();
+    Settings::ReadSettings();
 
     return true;
 }

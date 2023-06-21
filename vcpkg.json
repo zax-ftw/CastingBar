@@ -1,10 +1,10 @@
 {
   "name": "casting-bar",
-  "version-string": "1.0.1",
+  "version-string": "2.1.4",
   "homepage": "https://github.com/zax-ftw/CastingBar",
   "license": "Apache-2.0",
   "dependencies": [
-    "commonlibsse-ng",
+    "commonlibsse-ng-flatrim",
     "magic-enum",
     "simpleini"
   ]

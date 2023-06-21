@@ -1,25 +1,17 @@
 #pragma once
 
-class Settings
+struct Settings
 {
-public:
-	[[nodiscard]] static Settings& GetSingleton()
-	{
-		static Settings singleton;
-        return singleton;
-	}
+	static void ReadSettings();
 
-	void Load();
+	// General
+	static inline bool EnableForSpell = true;
+	static inline bool EnableForShout = true;
+	static inline bool EnableForBow = false;
 
-	bool flashWhenCharged{ true };
-	float widgetXPosition{ 961.0f };
-	float widgetYPosition{ 1040.0f };
-	float widgetXScale{ 75.0f };
-	float widgetYScale{ 75.0f };
-
-private:
-	void GetValue(CSimpleIniA& a_ini, std::uint32_t& a_value, const char* a_section, const char* a_key, const char* a_comment);
-	void GetValue(CSimpleIniA& a_ini, float& a_value, const char* a_section, const char* a_key, const char* a_comment);
-	void GetValue(CSimpleIniA& a_ini, bool& a_value, const char* a_section, const char* a_key, const char* a_comment);
-    void GetValue(CSimpleIniA& a_ini, std::string& a_value, const char* a_section, const char* a_key, const char* a_comment);
+	// Position
+	static inline float WidgetPositionX = 961.0f;
+	static inline float WidgetPositionY = 1040.0f;
+	static inline float WidgetScaleX = 75.0f;
+	static inline float WidgetScaleY = 75.0f;
 };
