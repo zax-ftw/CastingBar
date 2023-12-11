@@ -23,6 +23,9 @@ public:
 	std::unique_ptr<IState> HandleAction(RE::Actor* actor, Action action) override;
 	std::optional<float> GetProgress(RE::PlayerCharacter* player) override;
 
+	float castingTime = 0;
+	int i = 0;
+
 private:
 
 	RE::MagicCaster* GetMagicCaster(RE::Actor* actor);
