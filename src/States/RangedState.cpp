@@ -26,7 +26,8 @@ std::unique_ptr<IState> RangedState::HandleAction(Actor* actor, Action action)
 	switch (action) {
 	case Action::kBowRelease:
 	case Action::kBowReset:
-	case Action::kAttackStop:
+	case Action::kWeaponSheathe:
+	case Action::kWeaponDraw:
 		return std::make_unique<DefaultState>();
 	}
 	return nullptr;

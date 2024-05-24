@@ -14,17 +14,8 @@ CastingBar::CastingBar()
 	menuFlags.set(UI_MENU_FLAGS::kRequiresUpdate);
 	menuFlags.set(UI_MENU_FLAGS::kAllowSaving);
 
-	if (uiMovie) {
-		uiMovie->SetMouseCursorCount(0); // disable input
-		uiMovie->SetVisible(true);
-	}
-
-	if (auto scaleform = BSScaleformManager::GetSingleton()) {
-		scaleform->LoadMovie(this, this->uiMovie, MENU_PATH);
-	}
-
 	auto player = PlayerCharacter::GetSingleton();
-	controller.reset(new StateController(player));
+	controller.reset(new StateController(this, player));
 }
 
 CastingBar::~CastingBar() 
@@ -53,11 +44,11 @@ void CastingBar::Hide()
     }
 }
 
-MessageResult CastingBar::ProcessMessage(UIMessage& message)
+MessageResult CastingBar::ProcessMessage(UIMessage& a_message)
 {
-	if (message.menu == MENU_NAME) {
+	if (a_message.menu == MENU_NAME) {
 
-		switch (message.type.get()) {
+		switch (a_message.type.get()) {
 		case MessageType::kShow:
 		case MessageType::kReshow:
 			OnShow();
@@ -69,20 +60,30 @@ MessageResult CastingBar::ProcessMessage(UIMessage& message)
 		}
     }
 
-    return IMenu::ProcessMessage(message);
+    return IMenu::ProcessMessage(a_message);
 }
 
 void CastingBar::AdvanceMovie(float a_interval, std::uint32_t a_currentTime) 
 {
     IMenu::AdvanceMovie(a_interval, a_currentTime);
 
-	controller->Update(this);
+	controller->Update();
 }
 
-void CastingBar::SetPercent(float percent)
+void CastingBar::LoadMovie(const char* a_movie)
 {
-	const GFxValue value = percent * 100.0f;
+	//logger::trace("CastingBar::LoadMovie: {}", a_movie);
 
+	auto scaleform = BSScaleformManager::GetSingleton();
+	scaleform->LoadMovie(this, this->uiMovie, a_movie);
+
+	ApplyLayout();
+}
+
+void CastingBar::SetPercent(float a_percent)
+{
+	const GFxValue value = a_percent * 100.0f;
+	
 	uiMovie->Invoke("meter.doShow", nullptr, nullptr, 0);
 	uiMovie->Invoke("meter.setMeterPercent", nullptr, &value, 1);
 
@@ -107,16 +108,17 @@ void CastingBar::ApplyLayout()
     GFxValue posArray[5] = {x_pos, y_pos, 0.0, x_scl, y_scl};
 
     uiMovie->Invoke("meter.setLocation", nullptr, posArray, 5);
+
+	uiMovie->SetMouseCursorCount(0); // disable input
+	uiMovie->SetVisible(true);
 }
 
 void CastingBar::OnShow()
 {
-	logger::trace("CastingBar::OnShow");
-
-	ApplyLayout();
+	//logger::trace("CastingBar::OnShow");
 };
 
 void CastingBar::OnHide() 
 {
-	logger::trace("CastingBar::OnHide");
+	//logger::trace("CastingBar::OnHide");
 };

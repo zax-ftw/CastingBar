@@ -8,6 +8,4 @@ public:
 	RightMagicState();
 
 	std::unique_ptr<IState> HandleAction(RE::Actor* actor, Action action) override;
-
-	const char* GetName() override { return "RightMagic"; };
 };

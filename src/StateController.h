@@ -40,14 +40,14 @@ public:
 	using ObjectLoadedEventSource = RE::BSTEventSource<RE::TESObjectLoadedEvent>;
 	using LoadGameEventSource = RE::BSTEventSource<RE::TESLoadGameEvent>;
 
-	StateController(RE::PlayerCharacter* a_player);
+	StateController(CastingBar* a_meter, RE::PlayerCharacter* a_player);
 
 	EventResult ProcessEvent(const RE::BSAnimationGraphEvent* a_event, AnimationGraphEventSource* a_source) override;
 	EventResult ProcessEvent(const RE::TESObjectLoadedEvent* a_event, ObjectLoadedEventSource* a_source) override;
 	EventResult ProcessEvent(const RE::TESLoadGameEvent* a_event, LoadGameEventSource* a_source) override;
 
 	void Dispatch(Action action);
-	void Update(CastingBar* meter);
+	void Update();
 
 private:
 	using ActionMap = std::unordered_map<std::string, Action, 
@@ -56,7 +56,8 @@ private:
 	static Action AnimEventToAction(const RE::BSFixedString& a_event);
 
 	std::unique_ptr<IState> state;
-	RE::PlayerCharacter* m_actor;
+	RE::PlayerCharacter* actor;
+	CastingBar* meter;
 
 	static inline bool firstLoad{ true };
 };

@@ -20,7 +20,8 @@ std::unique_ptr<IState> MagicState::HandleAction(Actor* actor, Action action)
 	case Action::kSpellCastStop:
 	case Action::kSpellPreAimedToAimed:
 	case Action::kSpellUnequip:
-	case Action::kAttackStop:
+	case Action::kWeaponSheathe:
+	case Action::kWeaponDraw:
 		return std::make_unique<DefaultState>();
 	}
 

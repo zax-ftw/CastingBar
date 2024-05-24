@@ -19,7 +19,7 @@ public:
 	std::unique_ptr<IState> HandleAction(RE::Actor* actor, Action action) override;
 	std::optional<float> GetProgress(RE::PlayerCharacter* player) override;
 
-	const char* GetName() override { return "Ranged"; };
+	const char* GetMovie() override { return "CastingBar_Bow"; };
 
 private:
 	using PlayerArrayBA0 = RE::BSTSmallArray<BowDrawnTimerEntry, 2>;

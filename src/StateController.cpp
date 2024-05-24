@@ -11,16 +11,15 @@
 using namespace RE;
 
 
-StateController::StateController(PlayerCharacter* a_player) :
-	m_actor(a_player), state(std::make_unique<DefaultState>())
+StateController::StateController(CastingBar* a_meter, PlayerCharacter* a_player) :
+	actor(a_player), meter(a_meter), state(std::make_unique<DefaultState>())
 {
 	if (auto events = ScriptEventSourceHolder::GetSingleton()) {
-		//events->AddEventSink<TESSwitchRaceCompleteEvent>(this);
 		events->AddEventSink<TESObjectLoadedEvent>(this);
 		events->AddEventSink<TESLoadGameEvent>(this);
 	}
 
-	m_actor->AddAnimationGraphEventSink(this);
+	actor->AddAnimationGraphEventSink(this);
 }
 
 Action StateController::AnimEventToAction(const BSFixedString& a_event)
@@ -64,13 +63,14 @@ Action StateController::AnimEventToAction(const BSFixedString& a_event)
 
 void StateController::Dispatch(Action action)
 {
-	auto newState = state->HandleAction(m_actor, action);
+	auto newState = state->HandleAction(actor, action);
 	if (newState) {
 
-		logger::trace("Transition: {} >> {}", 
-			state->GetName(), newState->GetName());
-
 		state = std::move(newState);
+
+		if (auto movie = state->GetMovie()) {
+			meter->LoadMovie(movie);
+		}	
 	}
 }
 
@@ -88,11 +88,11 @@ EventResult StateController::ProcessEvent(const BSAnimationGraphEvent* a_event, 
 
 EventResult StateController::ProcessEvent(const TESObjectLoadedEvent* a_event, ObjectLoadedEventSource* a_source)
 {
-	if (a_event->formID == m_actor->formID && a_event->loaded) {
+	if (a_event->formID == actor->formID && a_event->loaded) {
 
 		auto tasks = SKSE::GetTaskInterface();
 		tasks->AddTask([=] {
-			m_actor->AddAnimationGraphEventSink(this);
+			actor->AddAnimationGraphEventSink(this);
 		});
 	}
 	return EventResult::kContinue;
@@ -105,14 +105,14 @@ EventResult StateController::ProcessEvent(const TESLoadGameEvent* a_event, LoadG
 	}
 	firstLoad = false;
 
-	m_actor->AddAnimationGraphEventSink(this);
+	actor->AddAnimationGraphEventSink(this);
 
 	return EventResult::kContinue;
 }
 
-void StateController::Update(CastingBar* meter)
+void StateController::Update()
 {
-	auto prog = state->GetProgress(m_actor);
+	auto prog = state->GetProgress(actor);
 	if (prog.has_value()) {
 		meter->SetPercent(prog.value());
 		return;

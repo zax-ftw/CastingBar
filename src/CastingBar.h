@@ -22,7 +22,8 @@ public:
 	static void Show();
 	static void Hide();
 
-	void SetPercent(float percent);
+	void LoadMovie(const char* a_movie);
+	void SetPercent(float a_percent);
 	void FadeOut();
 
 	MessageResult ProcessMessage(RE::UIMessage& a_message) override;
@@ -30,7 +31,7 @@ public:
 
 private:
 
-	void ToggleVisibility(bool visible) { uiMovie->SetVisible(visible); };
+	void ToggleVisibility(bool a_visible) { uiMovie->SetVisible(a_visible); };
 
 	void ApplyLayout();
 

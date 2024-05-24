@@ -24,6 +24,7 @@ std::unique_ptr<IState> VoiceState::HandleAction(Actor* actor, Action action)
 	case Action::kVoiceFire:
 	case Action::kVoiceStop:
 	case Action::kWeaponSheathe:
+	case Action::kWeaponDraw:
 		return std::make_unique<DefaultState>();
 	}
 
