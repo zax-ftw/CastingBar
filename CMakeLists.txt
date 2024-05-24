@@ -6,7 +6,7 @@ message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}")
 ########################################################################################################################
 project(
     CastingBar
-    VERSION 2.1.4
+    VERSION 3.0.0
     LANGUAGES CXX
 )
 
